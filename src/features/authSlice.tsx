@@ -1,4 +1,4 @@
-import { loginUser } from "@/services/auth";
+import { loginUser, signupUser } from "@/services/auth";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface AuthState {
@@ -31,6 +31,19 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action: PayloadAction<any>) => {
         (state.loading = false), (state.error = action.payload);
+      });
+
+    build
+      .addCase(signupUser.pending, (state) => {
+        (state.loading = true), (state.error = null);
+      })
+      .addCase(signupUser.fulfilled, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(signupUser.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
