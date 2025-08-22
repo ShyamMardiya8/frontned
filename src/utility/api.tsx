@@ -1,21 +1,26 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", // your API base
+  baseURL: process.env.NEXT_PUBLIC_HOST_API_URL || "http://localhost:5000", // your API base
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 api.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers = {
         ...config.headers,
         Authorization: `Bearer ${token}`,
-      };
+      } as any;
     }
     return config;
   },

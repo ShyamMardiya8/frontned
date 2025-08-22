@@ -1,3 +1,7 @@
-const { publicRuntimeConfig } = getConfig();
+import getConfig from "next/config";
 
-export const LOGIN_ENDPOINT = `${publicRuntimeConfig.HOST_API_URL}`;
+const { publicRuntimeConfig } = getConfig() || {};
+export const LOGIN_ENDPOINT = "/admin/login";
+export const SIGNUP_ENDPOINT = "admin/signup";
+
+console.info("🚀 ~ LOGIN_ENDPOINT:", LOGIN_ENDPOINT);
