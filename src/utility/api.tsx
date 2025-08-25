@@ -4,8 +4,8 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
+import { getCookie, setCookie } from "./cookieFunctions";
 
-// Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_HOST_API_URL || "http://localhost:5000", // your API base
   headers: {
@@ -15,11 +15,11 @@ const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("token");
+    const token = getCookie("access_token");
     if (token) {
       config.headers = {
         ...config.headers,
-        Authorization: `Bearer ${token}`,
+        Authorization: `${token}`,
       } as any;
     }
     return config;
@@ -27,13 +27,34 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ Response Interceptor (handle errors globally)
 api.interceptors.response.use(
   (response: AxiosResponse) => response.data,
-  (error) => {
-    const message =
-      error.response?.data?.message || error.message || "Something went wrong";
-    return Promise.reject(new Error(message));
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = getCookie("refresh_token");
+        if (refreshToken) {
+          const res = await axios.post(
+            `${
+              process.env.NEXT_PUBLIC_HOST_API_URL || "http://localhost:5000"
+            }/auth/refresh`,
+            { refreshToken }
+          );
+
+          const newToken = res.data?.data?.generateToken;
+          if (newToken) {
+            setCookie("access_token", newToken, 7);
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          }
+        }
+      } catch (err) {
+        console.error("Refresh token failed ❌");
+      }
+    }
   }
 );
 
