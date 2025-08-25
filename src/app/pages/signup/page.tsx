@@ -1,6 +1,7 @@
 "use client";
 import { AppDispatch } from "@/features/store";
 import { loginUser, signupUser } from "@/services/auth";
+import { ErrorState, LoginData, validate } from "@/utility/validate";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 
@@ -9,10 +10,27 @@ const Page = () => {
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState<ErrorState>({});
   const dispatch = useDispatch<AppDispatch>();
 
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: keyof LoginData
+  ) => {
+    const { value } = e.target;
+    setData({ ...data, [field]: value });
+
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: undefined });
+    }
+  };
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    const newErrors = validate(data);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     const body = {
       email: data.email,
       password: data.password,
@@ -33,7 +51,7 @@ const Page = () => {
               placeholder="Enter email"
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:outline-none"
               value={data.email}
-              onChange={(e) => setData({ ...data, email: e.target.value })}
+              onChange={(e) => handleChange(e, "email")}
             />
           </div>
           <div>
@@ -43,7 +61,7 @@ const Page = () => {
               placeholder="Enter password"
               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-400 focus:outline-none"
               value={data.password}
-              onChange={(e) => setData({ ...data, password: e.target.value })}
+              onChange={(e) => handleChange(e, "password")}
             />
           </div>
           <button

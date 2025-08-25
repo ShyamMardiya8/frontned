@@ -1,20 +1,15 @@
 "use client";
 import { AppDispatch } from "@/features/store";
 import { loginUser } from "@/services/auth";
+import { setCookie } from "@/utility/cookieFunctions";
+import { ErrorState, LoginData, validate } from "@/utility/validate";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 
-interface LoginData {
-  email: string;
-  password: string;
-}
 const Page = () => {
-  const [data, setData] = useState({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState(null);
+  const [data, setData] = useState<LoginData>({ email: "", password: "" });
+  const [errors, setErrors] = useState<ErrorState>({});
   const dispatch = useDispatch<AppDispatch>();
 
   const handleChange = (
@@ -22,29 +17,41 @@ const Page = () => {
     field: keyof LoginData
   ) => {
     const { value } = e.target;
-    if (value.trim() === "" && !value) {
-      setError(field);
-    }
     setData({ ...data, [field]: value });
-  };
-  console.log(data, "data");
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    if (data.email === "" && data.password === "") {
+
+    console.info("🚀 ~ handleChange ~ errors[field]:", errors[field]);
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: undefined });
     }
-    const body = {
-      email: data.email,
-      password: data.password,
-    };
-    dispatch(loginUser(body));
   };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors = validate(data);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const dispatchValue = dispatch(loginUser(data))
+      .then((res: any) => {
+        const { generateToken, refreshToken } = res?.payload?.data;
+        setCookie("access_token", generateToken);
+        setCookie("refresh_token", refreshToken);
+      })
+      .catch((err) => console.log(err));
+    console.info("🚀 ~ handleSubmit ~ dispatchValue:", dispatchValue);
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
       <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-8 w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Login
         </h2>
-        <form className="space-y-4" onSubmit={(e) => handleSubmit(e)}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* Email */}
           <div>
             <label className="block text-gray-700 text-sm mb-2">Email</label>
             <input
@@ -54,7 +61,10 @@ const Page = () => {
               value={data.email}
               onChange={(e) => handleChange(e, "email")}
             />
+            {errors.email && <p className="text-red-500">{errors.email}</p>}
           </div>
+
+          {/* Password */}
           <div>
             <label className="block text-gray-700 text-sm mb-2">Password</label>
             <input
@@ -64,7 +74,11 @@ const Page = () => {
               value={data.password}
               onChange={(e) => handleChange(e, "password")}
             />
+            {errors.password && (
+              <p className="text-red-500">{errors.password}</p>
+            )}
           </div>
+
           <button
             type="submit"
             className="w-full bg-indigo-600 text-white py-2 rounded-xl hover:bg-indigo-700 transition-all duration-300"

@@ -1,5 +1,6 @@
 import api from "@/utility/api";
 import { LOGIN_ENDPOINT, SIGNUP_ENDPOINT } from "@/utility/endpoints";
+import { LoginResponse } from "@/utility/interface";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -11,7 +12,10 @@ export const loginUser = createAsyncThunk(
     thunkAPI
   ) => {
     try {
-      const data = await api.post(LOGIN_ENDPOINT, { email, password });
+      const data: LoginResponse = await api.post(LOGIN_ENDPOINT, {
+        email,
+        password,
+      });
       console.info("🚀 ~ data:", data);
       toast.success(data?.message);
       return data;
