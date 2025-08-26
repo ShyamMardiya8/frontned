@@ -8,18 +8,18 @@ export interface LoginResponse {
   };
 }
 
+export interface UserData {
+  file: any[];
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  __v: number;
+}
+
 export interface User {
-  data: [
-    {
-      file: any[]; // If you know file structure, replace `any[]` with correct type
-      _id: string;
-      firstName: string;
-      lastName: string;
-      phoneNumber: string;
-      email: string;
-      __v: number;
-    }
-  ];
+  data: UserData[];
   message: string;
   statusCode: number;
   success: boolean;
